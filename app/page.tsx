@@ -47,9 +47,11 @@ const Home = async () => {
           <Button
             variant="ghost"
             className="h-fit p-0 text-primary hover:bg-transparent"
+            asChild
           >
-            Ver todos
-            <ChevronRightIcon size={16} />
+            <Link href="/products/recommended">
+              Ver todos <ChevronRightIcon size={16} />
+            </Link>
           </Button>
         </div>
         <ProductList products={products} />
@@ -70,8 +72,7 @@ const Home = async () => {
             asChild
           >
             <Link href="/restaurants/recommended">
-              Ver todos
-              <ChevronRightIcon size={16} />
+              Ver todos <ChevronRightIcon size={16} />
             </Link>
           </Button>
         </div>
