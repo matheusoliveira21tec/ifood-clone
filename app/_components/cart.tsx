@@ -1,14 +1,44 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { CartContext } from "../_context/cart";
 import CartItem from "./cart-item";
 import { Card, CardContent } from "./ui/card";
 import { formatCurrency } from "../_helpers/price";
 import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
 
-const Cart = () => {
-  const { products, subtotalPrice, totalPrice, totalDiscounts } =
+interface CartProps {
+  // eslint-disable-next-line no-unused-vars
+  setIsOpen: (isOpen: boolean) => void;
+}
+
+const Cart = ({ setIsOpen }: CartProps) => {
+  const [isSubmitLoading, setIsSubmitLoading] = useState(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+
+  const { products, subtotalPrice, totalPrice, totalDiscounts, clearCart } =
     useContext(CartContext);
+
+  const handleFinishOrderClick = async () => {
+    try {
+      setIsSubmitLoading(true);
+      clearCart();
+      setIsOpen(false);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmitLoading(false);
+    }
+  };
 
   return (
     <>
@@ -62,12 +92,42 @@ const Cart = () => {
             </div>
 
             {/* FINALIZAR PEDIDO */}
-            <Button className="mt-6 w-full">Finalizar pedido</Button>
+            <Button
+              className="mt-6 w-full"
+              onClick={() => setIsConfirmDialogOpen(true)}
+              disabled={isSubmitLoading}
+            >
+              Finalizar pedido
+            </Button>
           </>
         ) : (
           <h2 className="text-left font-medium">Sua sacola está vazia.</h2>
         )}
       </div>
+
+      <AlertDialog
+        open={isConfirmDialogOpen}
+        onOpenChange={setIsConfirmDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deseja finalizar seu pedido?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao finalizar seu pedido, você concorda com os termos e condições
+              da nossa plataforma.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleFinishOrderClick}
+              disabled={isSubmitLoading}
+            >
+              Finalizar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
