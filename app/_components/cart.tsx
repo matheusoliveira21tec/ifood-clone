@@ -15,6 +15,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./ui/alert-dialog";
+import { useSession } from "next-auth/react";
+import { createOrder } from "../_action/order";
+import { OrderStatus } from "@prisma/client";
+import { Loader2 } from "lucide-react";
 
 interface CartProps {
   // eslint-disable-next-line no-unused-vars
@@ -25,12 +29,42 @@ const Cart = ({ setIsOpen }: CartProps) => {
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
+  const { data } = useSession();
+
   const { products, subtotalPrice, totalPrice, totalDiscounts, clearCart } =
     useContext(CartContext);
 
   const handleFinishOrderClick = async () => {
+    if (!data?.user) return;
+
+    const restaurant = products[0].restaurant;
+
     try {
       setIsSubmitLoading(true);
+
+      await createOrder({
+        subtotalPrice,
+        totalDiscounts,
+        totalPrice,
+        deliveryFee: restaurant.deliveryFee,
+        deliveryTimeMinutes: restaurant.deliveryTimeMinutes,
+        restaurant: {
+          connect: { id: restaurant.id },
+        },
+        status: OrderStatus.CONFIRMED,
+        user: {
+          connect: { id: data.user.id },
+        },
+        products: {
+          createMany: {
+            data: products.map((product) => ({
+              productId: product.id,
+              quantity: product.quantity,
+            })),
+          },
+        },
+      });
+
       clearCart();
       setIsOpen(false);
     } catch (error) {
@@ -123,6 +157,9 @@ const Cart = ({ setIsOpen }: CartProps) => {
               onClick={handleFinishOrderClick}
               disabled={isSubmitLoading}
             >
+              {isSubmitLoading && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Finalizar
             </AlertDialogAction>
           </AlertDialogFooter>
